@@ -5,11 +5,13 @@ Pilot prototype for Matt Rubin and Eric.
 ## What it is
 A low-friction time calculator that tracks *work mode*, not micro-tasks.
 
-### Six modes
+### Eight modes
 - Planning / analysis
 - Supplier / manufacturing coordination
 - Logistics / fulfillment execution
-- Internal coordination / approvals
+- Meetings
+- Document updates / notes
+- Approvals / handoffs
 - Systems / admin / transactional work
 - Fire drills / exceptions
 
@@ -36,4 +38,4 @@ A low-friction time calculator that tracks *work mode*, not micro-tasks.
 - one-click switching
 
 ## Pilot assumption
-This is for Matt + Eric only, to see where supply-chain bandwidth actually goes before we overbuild automation.
+This is for Matt + Eric only, to see where supply-chain bandwidth actually goes before we overbuild automation. Meetings and document-update overhead are separate buckets on purpose, because they were getting hidden inside "internal coordination".
