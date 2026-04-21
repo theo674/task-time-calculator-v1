@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Supply Chain Task Time Calculator v1</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #111a2e;
+      --panel-2: #15213a;
+      --text: #e8eefc;
+      --muted: #9eb0d0;
+      --line: rgba(255,255,255,.08);
+      --accent: #7dd3fc;
+      --accent-2: #a78bfa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --bad: #fb7185;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius-sm: 12px;
+      font-synthesis-weight: none;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top left, #182444 0%, var(--bg) 45%, #070b14 100%);
+      color: var(--text);
+    }
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .main {
+      padding: 22px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 30px; letter-spacing: -.03em; }
+    .sub { color: var(--muted); margin-top: 8px; line-height: 1.5; max-width: 74ch; }
+    .statusRow {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      align-items: center;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      padding: 10px 14px;
+      border-radius: 999px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    .pill strong { font-size: 15px; }
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+    .mode {
+      min-height: 132px;
+      padding: 18px;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(125,211,252,.12), rgba(255,255,255,.03));
+      color: var(--text);
+      border-radius: 18px;
+      cursor: pointer;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
+    }
+    .mode:hover { transform: translateY(-2px); border-color: rgba(125,211,252,.4); }
+    .mode.active {
+      background: linear-gradient(180deg, rgba(167,139,250,.22), rgba(255,255,255,.05));
+      border-color: rgba(167,139,250,.55);
+      box-shadow: 0 0 0 1px rgba(167,139,250,.15) inset;
+    }
+    .mode .name { font-size: 20px; font-weight: 700; }
+    .mode .desc { margin-top: 10px; color: var(--muted); line-height: 1.35; font-size: 14px; }
+    .topGrid {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .side {
+      padding: 20px;
+    }
+    .timer {
+      font-size: 58px;
+      font-weight: 800;
+      letter-spacing: -.05em;
+      margin-top: 4px;
+    }
+    .label { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: .12em; }
+    .secondary {
+      margin-top: 18px;
+    }
+    .tagRow, .quickRow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .chip {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 9px 12px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .chip.active {
+      background: rgba(125,211,252,.18);
+      border-color: rgba(125,211,252,.45);
+    }
+    .chip.secondaryActive {
+      background: rgba(52,211,153,.14);
+      border-color: rgba(52,211,153,.45);
+    }
+    .actions {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .action {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .action:hover { border-color: rgba(255,255,255,.18); }
+    .summaryGrid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+    .summaryCard { padding: 20px; }
+    .summaryCard h2 { font-size: 18px; margin-bottom: 10px; }
+    .list { display: grid; gap: 10px; margin-top: 12px; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      font-size: 14px;
+    }
+    .row:last-child { border-bottom: 0; }
+    .meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+    .bar {
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .bar > div { height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+    .small { font-size: 12px; color: var(--muted); line-height: 1.5; }
+    .breakState {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(251,191,36,.12);
+      border: 1px solid rgba(251,191,36,.35);
+      color: #fde68a;
+      margin-left: 10px;
+    }
+    .footerNote {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    @media (max-width: 1120px) {
+      .hero, .topGrid, .summaryGrid { grid-template-columns: 1fr; }
+      .controls { grid-template-columns: repeat(2, 1fr); }
+      .actions { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 720px) {
+      .wrap { padding: 16px; }
+      h1 { font-size: 24px; }
+      .controls { grid-template-columns: 1fr; }
+      .timer { font-size: 42px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero card main">
+      <div>
+        <h1>Supply Chain Task Time Calculator</h1>
+        <p class="sub">Low-friction pilot for Matt + Eric. Track the work mode, not the micro-task. One tap to switch, optional RACI phase tag after the fact, and enough reporting to show where the week actually goes.</p>
+        <div class="statusRow">
+          <span class="pill">Active mode: <strong id="activeModeLabel">Planning / analysis</strong></span>
+          <span class="pill">Active tag: <strong id="activeTagLabel">Plan</strong></span>
+          <span class="pill">State: <strong id="trackingStateLabel">Tracking</strong></span>
+          <span class="breakState" id="idleBadge" style="display:none;">Auto-paused for inactivity</span>
+        </div>
+      </div>
+      <div>
+        <div class="label">Elapsed today</div>
+        <div class="timer" id="timerDisplay">00:00:00</div>
+        <div class="footerNote" id="lastEventLabel">Ready. Tap a mode to start.</div>
+      </div>
+    </section>
+
+    <section class="topGrid">
+      <div class="card main">
+        <div class="label">Six work modes</div>
+        <div class="controls" id="modeButtons"></div>
+        <div class="secondary">
+          <div class="label">Optional RACI phase tag</div>
+          <div class="tagRow" id="tagButtons"></div>
+        </div>
+      </div>
+      <div class="card side">
+        <div class="label">Fast actions</div>
+        <div class="actions">
+          <button class="action" id="breakBtn">Pause / break</button>
+          <button class="action" id="undoBtn">Undo last switch</button>
+          <button class="action" id="resetBtn">Clear today</button>
+        </div>
+        <div class="secondary">
+          <div class="label">How this pilot should feel</div>
+          <p class="small" style="margin-top:10px;">One click should be enough. If the tracking flow takes more than a couple seconds, the design is wrong. The point is to expose coordination load, systems drag, and fire-drill tax without making Matt or Eric do admin theater.</p>
+        </div>
+        <div class="secondary">
+          <div class="label">Idle rule</div>
+          <p class="small" style="margin-top:10px;">If the tab goes untouched for 3 minutes, it auto-pauses and logs a break segment. Any click brings it back.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="summaryGrid">
+      <div class="card summaryCard">
+        <h2>Today</h2>
+        <div class="small">Breakdown by mode for the current day.</div>
+        <div class="list" id="todaySummary"></div>
+      </div>
+      <div class="card summaryCard">
+        <h2>Last 7 days</h2>
+        <div class="small">Rollup that makes the bandwidth story legible.</div>
+        <div class="list" id="weekSummary"></div>
+      </div>
+    </section>
+  </div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'supply-chain-task-time-calculator-v1';
+  const IDLE_MS = 3 * 60 * 1000;
+  const MODES = [
+    { key: 'planning', name: 'Planning / analysis', desc: 'Forecasting, cost review, decisions, troubleshooting', color: '#7dd3fc' },
+    { key: 'supplier', name: 'Supplier / manufacturing coordination', desc: 'Vendors, copackers, COAs, batch follow-up', color: '#a78bfa' },
+    { key: 'logistics', name: 'Logistics / fulfillment execution', desc: 'QuickBox, carriers, FBA, TikTok, shipment tracking', color: '#34d399' },
+    { key: 'internal', name: 'Internal coordination / approvals', desc: 'Slack, meetings, signoffs, handoffs', color: '#fbbf24' },
+    { key: 'systems', name: 'Systems / admin / transactional work', desc: 'POs, trackers, ERP, portals, routine ops', color: '#fb7185' },
+    { key: 'fire', name: 'Fire drills / exceptions', desc: 'Stockouts, delays, defects, urgent blocks', color: '#f97316' },
+  ];
+  const TAGS = [
+    { key: 'plan', label: 'Plan' },
+    { key: 'source', label: 'Source' },
+    { key: 'make', label: 'Make' },
+    { key: 'deliver', label: 'Deliver' },
+    { key: 'quality', label: 'Quality' },
+    { key: 'systems', label: 'Systems/Projects' },
+  ];
+  const el = id => document.getElementById(id);
+  const fmt = ms => {
+    const s = Math.max(0, Math.floor(ms / 1000));
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  };
+  const todayKey = () => new Date().toISOString().slice(0, 10);
+  const startOfWeekKey = (d = new Date()) => {
+    const x = new Date(d);
+    const day = (x.getDay() + 6) % 7;
+    x.setDate(x.getDate() - day);
+    x.setHours(0,0,0,0);
+    return x.toISOString().slice(0,10);
+  };
+  const now = () => Date.now();
+  const defaultState = () => ({
+    activeMode: 'planning',
+    activeTag: 'plan',
+    paused: false,
+    currentStartedAt: now(),
+    currentSegmentStart: now(),
+    lastInteractionAt: now(),
+    history: [],
+    sessions: [],
+  });
+  const load = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (!saved) return defaultState();
+      return { ...defaultState(), ...saved };
+    } catch {
+      return defaultState();
+    }
+  };
+  const state = load();
+
+  const save = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+
+  const currentDay = todayKey();
+  const ensureSessions = () => {
+    const today = currentDay;
+    if (!state.sessions) state.sessions = [];
+    state.sessions = state.sessions.filter(s => s && s.end && s.start);
+    if (state.currentMode && state.currentStartedAt && !state.paused && !state.history.length) {
+      // no-op
+    }
+  };
+
+  function addSession(session) {
+    state.sessions.push(session);
+    state.sessions.sort((a, b) => a.start - b.start);
+  }
+
+  function closeCurrentSegment(reason = 'switch') {
+    if (state.paused) return;
+    const end = now();
+    if (end <= state.currentSegmentStart) return;
+    addSession({
+      start: state.currentSegmentStart,
+      end,
+      mode: state.activeMode,
+      tag: state.activeTag,
+      reason,
+    });
+    state.currentSegmentStart = end;
+  }
+
+  function switchMode(modeKey, tagKey = state.activeTag, reason = 'manual') {
+    const prev = { mode: state.activeMode, tag: state.activeTag, paused: state.paused, startedAt: state.currentSegmentStart };
+    if (state.activeMode === modeKey && !state.paused && state.activeTag === tagKey) return;
+    closeCurrentSegment(reason);
+    state.history.push(prev);
+    state.activeMode = modeKey;
+    state.activeTag = tagKey;
+    state.paused = false;
+    state.currentSegmentStart = now();
+    state.lastInteractionAt = now();
+    save();
+    render();
+  }
+
+  function pause(reason = 'pause') {
+    if (!state.paused) {
+      closeCurrentSegment(reason);
+      state.history.push({ mode: state.activeMode, tag: state.activeTag, paused: state.paused, startedAt: state.currentSegmentStart });
+      state.paused = true;
+      state.lastInteractionAt = now();
+      save();
+      render();
+    }
+  }
+
+  function undo() {
+    const prev = state.history.pop();
+    if (!prev) return;
+    state.paused = !!prev.paused;
+    state.activeMode = prev.mode || 'planning';
+    state.activeTag = prev.tag || 'plan';
+    state.currentSegmentStart = prev.startedAt || now();
+    state.lastInteractionAt = now();
+    save();
+    render();
+  }
+
+  function clearToday() {
+    const keep = [];
+    const day = currentDay;
+    for (const s of state.sessions) {
+      const startDay = new Date(s.start).toISOString().slice(0, 10);
+      const endDay = new Date(s.end).toISOString().slice(0, 10);
+      if (startDay !== day && endDay !== day) keep.push(s);
+    }
+    state.sessions = keep;
+    state.currentSegmentStart = now();
+    state.lastInteractionAt = now();
+    save();
+    render();
+  }
+
+  function idleCheck() {
+    if (state.paused) return;
+    const elapsedIdle = now() - state.lastInteractionAt;
+    if (elapsedIdle >= IDLE_MS) {
+      pause('idle');
+      el('idleBadge').style.display = 'inline-flex';
+      el('trackingStateLabel').textContent = 'Paused';
+      el('lastEventLabel').textContent = 'Auto-paused after inactivity.';
+      el('timerDisplay').textContent = 'PAUSED';
+      save();
+    }
+  }
+
+  function todayTotals() {
+    const day = currentDay;
+    const totals = Object.fromEntries(MODES.map(m => [m.key, 0]));
+    const tagTotals = Object.fromEntries(TAGS.map(t => [t.key, 0]));
+    for (const s of state.sessions) {
+      const startDay = new Date(s.start).toISOString().slice(0, 10);
+      if (startDay === day) {
+        const dur = Math.max(0, s.end - s.start);
+        totals[s.mode] = (totals[s.mode] || 0) + dur;
+        tagTotals[s.tag] = (tagTotals[s.tag] || 0) + dur;
+      }
+    }
+    if (!state.paused) {
+      const dur = now() - state.currentSegmentStart;
+      totals[state.activeMode] = (totals[state.activeMode] || 0) + dur;
+      tagTotals[state.activeTag] = (tagTotals[state.activeTag] || 0) + dur;
+    }
+    return { totals, tagTotals };
+  }
+
+  function weekTotals() {
+    const start = new Date(startOfWeekKey());
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    const totals = Object.fromEntries(MODES.map(m => [m.key, 0]));
+    for (const s of state.sessions) {
+      const s0 = new Date(s.start);
+      const s1 = new Date(s.end);
+      if (s1 < start || s0 >= end) continue;
+      const dur = Math.max(0, s.end - s.start);
+      totals[s.mode] = (totals[s.mode] || 0) + dur;
+    }
+    if (!state.paused) {
+      const s0 = new Date(state.currentSegmentStart);
+      if (s0 >= start && s0 < end) {
+        totals[state.activeMode] = (totals[state.activeMode] || 0) + (now() - state.currentSegmentStart);
+      }
+    }
+    return totals;
+  }
+
+  function totalFromMap(map) {
+    return Object.values(map).reduce((a, b) => a + b, 0);
+  }
+
+  function renderSummary(target, map) {
+    const total = totalFromMap(map) || 1;
+    target.innerHTML = '';
+    const ranked = Object.entries(map).sort((a, b) => b[1] - a[1]);
+    ranked.forEach(([key, value]) => {
+      const meta = MODES.find(m => m.key === key) || TAGS.find(t => t.key === key) || { name: key, label: key };
+      const label = meta.name || meta.label;
+      const pct = Math.round((value / total) * 100);
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = `
+        <div>
+          <div><strong>${label}</strong></div>
+          <div class="meta">${fmt(value)} · ${pct}%</div>
+          <div class="bar"><div style="width:${pct || 0}%;"></div></div>
+        </div>
+        <div><strong>${pct}%</strong></div>
+      `;
+      target.appendChild(row);
+    });
+  }
+
+  function renderTags() {
+    const wrap = el('tagButtons');
+    wrap.innerHTML = '';
+    TAGS.forEach(tag => {
+      const b = document.createElement('button');
+      b.className = 'chip' + (state.activeTag === tag.key ? ' secondaryActive' : '');
+      b.textContent = tag.label;
+      b.onclick = () => { state.activeTag = tag.key; state.lastInteractionAt = now(); save(); render(); };
+      wrap.appendChild(b);
+    });
+  }
+
+  function renderModes() {
+    const wrap = el('modeButtons');
+    wrap.innerHTML = '';
+    MODES.forEach(mode => {
+      const b = document.createElement('button');
+      b.className = 'mode' + (state.activeMode === mode.key && !state.paused ? ' active' : '');
+      b.innerHTML = `<div class="name">${mode.name}</div><div class="desc">${mode.desc}</div>`;
+      b.onclick = () => switchMode(mode.key, state.activeTag, 'manual');
+      wrap.appendChild(b);
+    });
+  }
+
+  function render() {
+    ensureSessions();
+    const activeMode = MODES.find(m => m.key === state.activeMode) || MODES[0];
+    const activeTag = TAGS.find(t => t.key === state.activeTag) || TAGS[0];
+    el('activeModeLabel').textContent = activeMode.name;
+    el('activeTagLabel').textContent = activeTag.label;
+    el('trackingStateLabel').textContent = state.paused ? 'Paused' : 'Tracking';
+    el('idleBadge').style.display = state.paused ? 'inline-flex' : 'none';
+    renderModes();
+    renderTags();
+    const { totals } = todayTotals();
+    renderSummary(el('todaySummary'), totals);
+    renderSummary(el('weekSummary'), weekTotals());
+    el('lastEventLabel').textContent = state.paused ? 'Paused. Tap any mode to resume.' : `Last touch: ${new Date(state.lastInteractionAt).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'})}`;
+    el('timerDisplay').textContent = state.paused ? 'PAUSED' : fmt(now() - state.currentSegmentStart);
+  }
+
+  el('breakBtn').onclick = () => pause('manual');
+  el('undoBtn').onclick = undo;
+  el('resetBtn').onclick = clearToday;
+
+  window.addEventListener('keydown', () => { state.lastInteractionAt = now(); save(); });
+  window.addEventListener('click', () => { state.lastInteractionAt = now(); save(); });
+  window.addEventListener('scroll', () => { state.lastInteractionAt = now(); save(); }, { passive: true });
+  setInterval(() => {
+    idleCheck();
+    if (!state.paused) render();
+    else {
+      const { totals } = todayTotals();
+      renderSummary(el('todaySummary'), totals);
+      renderSummary(el('weekSummary'), weekTotals());
+      el('timerDisplay').textContent = 'PAUSED';
+    }
+  }, 1000);
+
+  render();
+  setInterval(() => {
+    if (!state.paused) el('timerDisplay').textContent = fmt(now() - state.currentSegmentStart);
+    else el('timerDisplay').textContent = 'PAUSED';
+  }, 1000);
+})();
+</script>
+</body>
+</html>
